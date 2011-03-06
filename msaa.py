@@ -129,7 +129,7 @@ class Element(object):
             return objBSTRValue.value
         else:
             objBSTRValue.value = objValue
-            self.IAccessible._IAccessible__com__pet_accValue(objChildId, ctypes.byref(objBSTRValue))
+            self.IAccessible._IAccessible__com__put_accValue(objChildId, ctypes.byref(objBSTRValue))
             return objBSTRValue.value
 
     def accDefaultAction(self):
