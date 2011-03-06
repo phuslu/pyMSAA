@@ -2,7 +2,7 @@
 # coding:utf-8
 
 import sys, os, re, time
-import platform
+import xml.dom.minidom, cgi
 import ctypes, ctypes.wintypes
 import comtypes, comtypes.automation, comtypes.client
 
@@ -309,25 +309,27 @@ def ElementFromPoint(x, y):
 
 
 def ElementToXML(objElement):
-    objRoot = lxml.etree.fromstring('<Accessible />')
-    lstQueue = [(objElement, objRoot)]
+    objDocument = xml.dom.minidom.Document()
+    lstQueue = [(objElement, objDocument)]
     while lstQueue:
         objElement, objTree = lstQueue.pop(0)
         objRoleName = objElement.accRoleName()
         objName = objElement.accName()
         strRoleName = objRoleName or 'Unkown'
         strName = cgi.escape(unicode(objName)) if objName else ''
-        #strLocation = unicode(objLocation).strip('()').replace(' ', '')
-        objSubTree = lxml.etree.SubElement(objTree, strRoleName)
+        strLocation = ','.join(str(x) for x in objElement.accLocation())
+        objSubTree = xml.dom.minidom.Element(strRoleName)
+        objSubTree.ownerDocument = objDocument
         try:
-            objSubTree.attrib['Name'] = strName
+            objSubTree.attributes['Name'] = strName
         except:
-            objSubTree.attrib['Name'] = strName.encode('unicode-escape')
-        #objSubTree.attrib['Location'] = strLocation
+            objSubTree.attributes['Name'] = strName.encode('unicode-escape')
+        objSubTree.attributes['Location'] = strLocation
+        objTree.appendChild(objSubTree)
         if objElement.IAccessible.accChildCount > 0:
             for objElementChild in objElement:
                 lstQueue.append((objElementChild, objSubTree))
-    return lxml.etree.tostring(objRoot, pretty_print=1)
+    return objDocument.toprettyxml()
 
 def Find(objHandle, strRoleName, **kwargs):
     if isinstance(objHandle, Element):
