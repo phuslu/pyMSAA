@@ -280,25 +280,31 @@ SELFLAG_REMOVESELECTION 16
     def findall(self, strRoleName, **kwargs):
         return list(self.finditer(strRoleName, **kwargs))
 
+    def toxml(self):
+        objDocument = xml.dom.minidom.Document()
+        lstQueue = [(self, objDocument)]
+        while lstQueue:
+            objElement, objTree = lstQueue.pop(0)
+            objRoleName = objElement.accRoleName()
+            objName = objElement.accName()
+            strRoleName = objRoleName or 'Unkown'
+            strName = cgi.escape(unicode(objName)) if objName else ''
+            strLocation = ','.join(str(x) for x in objElement.accLocation())
+            objSubTree = xml.dom.minidom.Element(strRoleName)
+            objSubTree.ownerDocument = objDocument
+            try:
+                objSubTree.attributes['Name'] = strName
+            except:
+                objSubTree.attributes['Name'] = strName.encode('unicode-escape')
+            objSubTree.attributes['Location'] = strLocation
+            objTree.appendChild(objSubTree)
+            if objElement.IAccessible.accChildCount > 0:
+                for objElementChild in objElement:
+                    lstQueue.append((objElementChild, objSubTree))
+        return objDocument.toprettyxml()
 
-def ElementFromWindow(strWindowClassName, strWindowTitle):
-    if strWindowClassName is not None and not isinstance(strWindowClassName, basestring):
-        raise TypeError(u'strWindowClassName must be a string or None')
-    if strWindowTitle is not None and not isinstance(strWindowTitle, basestring):
-        raise TypeError(u'strWindowTitle must be a string or None')
-    strWindowClassName = unicode(strWindowClassName) if isinstance(strWindowClassName, str) else None
-    strWindowTitle = unicode(strWindowTitle) if isinstance(strWindowTitle, str) else None
-    iHwnd = ctypes.windll.user32.FindWindowW(strWindowClassName, strWindowTitle)
-    if iHwnd == 0:
-        raise RuntimeError(u'Cannot FindWindowW(%r, %r)' % (strWindowClassName, strWindowTitle))
-    return ElementFromHWND(iHwnd)
 
-def ElementFromHWND(iHwnd):
-    IAccessible = ctypes.POINTER(comtypes.gen.Accessibility.IAccessible)()
-    ctypes.oledll.oleacc.AccessibleObjectFromWindow(iHwnd, 0, ctypes.byref(comtypes.gen.Accessibility.IAccessible._iid_), ctypes.byref(IAccessible))
-    return Element(IAccessible, 0)
-
-def ElementFromPoint(x, y):
+def point(x, y):
     objPoint = ctypes.wintypes.POINT()
     objPoint.x = x
     objPoint.y = y
@@ -307,31 +313,7 @@ def ElementFromPoint(x, y):
     ctypes.oledll.oleacc.AccessibleObjectFromPoint(objPoint, ctypes.byref(IAccessible), ctypes.byref(objChildId))
     return Element(IAccessible, objChildId.value or 0)
 
-
-def ElementToXML(objElement):
-    objDocument = xml.dom.minidom.Document()
-    lstQueue = [(objElement, objDocument)]
-    while lstQueue:
-        objElement, objTree = lstQueue.pop(0)
-        objRoleName = objElement.accRoleName()
-        objName = objElement.accName()
-        strRoleName = objRoleName or 'Unkown'
-        strName = cgi.escape(unicode(objName)) if objName else ''
-        strLocation = ','.join(str(x) for x in objElement.accLocation())
-        objSubTree = xml.dom.minidom.Element(strRoleName)
-        objSubTree.ownerDocument = objDocument
-        try:
-            objSubTree.attributes['Name'] = strName
-        except:
-            objSubTree.attributes['Name'] = strName.encode('unicode-escape')
-        objSubTree.attributes['Location'] = strLocation
-        objTree.appendChild(objSubTree)
-        if objElement.IAccessible.accChildCount > 0:
-            for objElementChild in objElement:
-                lstQueue.append((objElementChild, objSubTree))
-    return objDocument.toprettyxml()
-
-def Find(objHandle, strRoleName, **kwargs):
+def window(objHandle, strRoleName, **kwargs):
     if isinstance(objHandle, Element):
         objElement = objHandle
     elif objHandle in (0, None):
@@ -339,8 +321,9 @@ def Find(objHandle, strRoleName, **kwargs):
     elif isinstance(objHandle, (int, long)):
         objElement = ElementFromHWND(objHandle)
     elif isinstance(objHandle, basestring):
+        objHandle = unicode(objHandle)
         iHwnd = ctypes.windll.user32.FindWindowW(objHandle, None) or ctypes.windll.user32.FindWindowW(None, objHandle)
-        assert iHwnd > 0
+        assert iHwnd > 0, u'Cannot FindWindow %r' % objHandle
         objElement = ElementFromHWND(iHwnd)
     else:
         raise TypeError(u'AccFind objHandle must be a int/str/unicode/AccObject, not %r' % objHandle)

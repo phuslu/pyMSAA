@@ -43,7 +43,7 @@ def main():
         x, y = GetCursorPos()
         if (x, y) != (x_old, y_old):
             x_old, y_old = x, y
-            objElement = msaa.ElementFromPoint(x, y)
+            objElement = msaa.point(x, y)
             os.system('cls')
             print GetCurrentElementInfo(objElement)
         time.sleep(0.5)
