@@ -125,11 +125,11 @@ class Element(object):
         objChildId.value = self.iObjectId
         objBSTRValue = comtypes.automation.BSTR()
         if objValue is None:
-            self.IAccessible._IAccessible__com__get_accDefaultAction(objChildId, ctypes.byref(objBSTRValue))
+            self.IAccessible._IAccessible__com__get_accValue(objChildId, ctypes.byref(objBSTRValue))
             return objBSTRValue.value
         else:
             objBSTRValue.value = objValue
-            self.IAccessible._IAccessible__com__put_accDefaultAction(objChildId, ctypes.byref(objBSTRValue))
+            self.IAccessible._IAccessible__com__pet_accValue(objChildId, ctypes.byref(objBSTRValue))
             return objBSTRValue.value
 
     def accDefaultAction(self):
