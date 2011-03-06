@@ -75,7 +75,10 @@ AccRoleNameMap = {
 }
 
 class Element(object):
-    '''Accessible Element'''
+    '''
+    IAccessible Element
+    http://msdn.microsoft.com/en-us/library/dd318466(v=VS.85).aspx
+    '''
     def __init__(self, IAccessible, iObjectId):
         if not isinstance(IAccessible, comtypes.gen.Accessibility.IAccessible):
             raise TypeError(u'Element(IAccessible,iObjectId) first argument type must be IAccessible')
@@ -116,37 +119,83 @@ class Element(object):
         self.IAccessible._IAccessible__com_accLocation(ctypes.byref(objL), ctypes.byref(objT), ctypes.byref(objW), ctypes.byref(objH), objChildId)
         return (objL.value, objT.value, objW.value, objH.value)
 
+    def accValue(self, objValue=None):
+        objChildId = comtypes.automation.VARIANT()
+        objChildId.vt = comtypes.automation.VT_I4
+        objChildId.value = self.iObjectId
+        objBSTRValue = comtypes.automation.BSTR()
+        if objValue is None:
+            self.IAccessible._IAccessible__com__get_accDefaultAction(objChildId, ctypes.byref(objBSTRValue))
+            return objBSTRValue.value
+        else:
+            objBSTRValue.value = objValue
+            self.IAccessible._IAccessible__com__put_accDefaultAction(objChildId, ctypes.byref(objBSTRValue))
+            return objBSTRValue.value
+
     def accDefaultAction(self):
-        return self.IAccessible.accDefaultAction()
+        objChildId = comtypes.automation.VARIANT()
+        objChildId.vt = comtypes.automation.VT_I4
+        objChildId.value = self.iObjectId
+        objDefaultAction = comtypes.automation.BSTR()
+        self.IAccessible._IAccessible__com__get_accDefaultAction(objChildId, ctypes.byref(objDefaultAction))
+        return objDefaultAction.value
 
     def accDescription(self):
-        return self.IAccessible.accDescription()
+        objChildId = comtypes.automation.VARIANT()
+        objChildId.vt = comtypes.automation.VT_I4
+        objChildId.value = self.iObjectId
+        objDescription = comtypes.automation.BSTR()
+        self.IAccessible._IAccessible__com__get_accDescription(objChildId, ctypes.byref(objDescription))
+        return objDescription.value
 
     def accHelp(self):
-        return self.IAccessible.accHelp()
+        objChildId = comtypes.automation.VARIANT()
+        objChildId.vt = comtypes.automation.VT_I4
+        objChildId.value = self.iObjectId
+        objHelp = comtypes.automation.BSTR()
+        self.IAccessible._IAccessible__com__get_accHelp(objChildId, ctypes.byref(objHelp))
+        return objHelp.value
 
     def accHelpTopic(self):
+        '''Note  The accHelpTopic property is deprecated and should not be used.'''
         return self.IAccessible.accHelpTopic()
 
     def accKeyboardShortcut(self):
-        return self.IAccessible.accKeyboardShortcut()
-
-    def accNavigate(self):
-        return self.IAccessible.accNavigate()
+        objChildId = comtypes.automation.VARIANT()
+        objChildId.vt = comtypes.automation.VT_I4
+        objChildId.value = self.iObjectId
+        objKeyboardShortcut = comtypes.automation.BSTR()
+        self.IAccessible._IAccessible__com__get_acccKeyboardShortcut(objhildId, ctypes.byref(objKeyboardShortcut))
+        return objKeyboardShortcut.value
 
     def accParent(self):
         return self.IAccessible.accParent()
 
-    def accState(self):
-        return self.IAccessible.accState()
+    def accSelection(self):
+        objChildren = comtypes.automation.VARIANT()
+        self.IAccessible._IAccessible__com__get_accSelection(ctypes.byref(objChildren))
+        return objChildren.value
 
-    def accValue(self):
-        return self.IAccessible.accValue()
+    def accState(self):
+        objChildId = comtypes.automation.VARIANT()
+        objChildId.vt = comtypes.automation.VT_I4
+        objChildId.value = self.iObjectId
+        objState = comtypes.automation.VARIANT()
+        self.IAccessible._IAccessible__com__get_accState(objChildId, ctypes.byref(objState))
+        return objState.value
+
+    def accNavigate(self):
+        '''Need Implemented'''
+        return self.IAccessible.accNavigate()
 
     def accDoDefaultAction(self):
-        return self.IAccessible.accDoDefaultAction()
+        objChildId = comtypes.automation.VARIANT()
+        objChildId.vt = comtypes.automation.VT_I4
+        objChildId.value = self.iObjectId
+        self.IAccessible._IAccessible__com__accDoDefaultAction(objhildId)
 
     def accFocus(self):
+        '''Need Implemented'''
         if self.iObjectId:
             return self.IAccessible.accFocus(self.iObjectId)
         else:
@@ -256,7 +305,7 @@ def ElementFromPoint(x, y):
     IAccessible = ctypes.POINTER(comtypes.gen.Accessibility.IAccessible)()
     objChildId = comtypes.automation.VARIANT()
     ctypes.oledll.oleacc.AccessibleObjectFromPoint(objPoint, ctypes.byref(IAccessible), ctypes.byref(objChildId))
-    return Element(IAccessible, objChildId.value)
+    return Element(IAccessible, objChildId.value or 0)
 
 
 def ElementToXML(objElement):

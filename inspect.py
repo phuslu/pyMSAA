@@ -35,7 +35,7 @@ def GetCurrentElementInfo(objElement):
             dictInfo[attr] = getattr(objElement, attr)()
         except:
             dictInfo[attr] = None
-    return '\n'.join('%s:\t%s' % (attr, dictInfo[attr]) for attr in lstAttributeNameList)
+    return '\n'.join('%s:\t%r' % (attr, dictInfo[attr]) for attr in lstAttributeNameList)
 
 def main():
     x_old, y_old = GetCursorPos()
