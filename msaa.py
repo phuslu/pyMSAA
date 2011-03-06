@@ -313,19 +313,20 @@ def point(x, y):
     ctypes.oledll.oleacc.AccessibleObjectFromPoint(objPoint, ctypes.byref(IAccessible), ctypes.byref(objChildId))
     return Element(IAccessible, objChildId.value or 0)
 
-def window(objHandle, strRoleName, **kwargs):
-    if isinstance(objHandle, Element):
-        objElement = objHandle
-    elif objHandle in (0, None):
-        objElement = ElementFromHWND(ctypes.windll.user32.GetDesktopWindow())
-    elif isinstance(objHandle, (int, long)):
-        objElement = ElementFromHWND(objHandle)
+def window(objHandle):
+    if objHandle in (0, None):
+        objElement = window(ctypes.windll.user32.GetDesktopWindow())
     elif isinstance(objHandle, basestring):
         objHandle = unicode(objHandle)
         iHwnd = ctypes.windll.user32.FindWindowW(objHandle, None) or ctypes.windll.user32.FindWindowW(None, objHandle)
         assert iHwnd > 0, u'Cannot FindWindow %r' % objHandle
-        objElement = ElementFromHWND(iHwnd)
+        objElement = window(iHwnd)
+    elif isinstance(objHandle, (int, long)):
+        iHwnd = objHandle
+        IAccessible = ctypes.POINTER(comtypes.gen.Accessibility.IAccessible)()
+        ctypes.oledll.oleacc.AccessibleObjectFromWindow(iHwnd, 0, ctypes.byref(comtypes.gen.Accessibility.IAccessible._iid_), ctypes.byref(IAccessible))
+        objElement = Element(IAccessible, 0)
     else:
-        raise TypeError(u'AccFind objHandle must be a int/str/unicode/AccObject, not %r' % objHandle)
-    return objElement.find(strRoleName, **kwargs)
+        raise TypeError(u'window argument objHandle must be a int/str/unicode/AccObject, not %r' % objHandle)
+    return objElement
 
