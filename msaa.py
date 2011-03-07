@@ -192,7 +192,7 @@ class Element(object):
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
-        self.IAccessible._IAccessible__com__accDoDefaultAction(objhildId)
+        self.IAccessible._IAccessible__com_accDoDefaultAction(objChildId)
 
     def accFocus(self):
         '''Need Implemented'''
