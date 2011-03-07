@@ -292,13 +292,7 @@ SELFLAG_REMOVESELECTION 16
                 return None
 
     def findall(self, strRoleName, **kwargs):
-        lstElementList = []
-        dictSeen = {}
-        for objElement in self.finditer(strRoleName, **kwargs):
-            if objElement not in dictSeen:
-                lstElementList.append(objElement)
-                dictSeen[objElement] = 1
-        return lstElementList
+        return list(self.finditer(strRoleName, **kwargs))
 
     def toxml(self):
         objDocument = xml.dom.minidom.Document()
