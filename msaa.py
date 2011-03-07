@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'python.zip'))
+
+print sys.path
+
 import sys, os, re, time
 import xml.dom.minidom, cgi
 import ctypes, ctypes.wintypes

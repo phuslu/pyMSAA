@@ -3,8 +3,7 @@
 
 import sys, os, re, logging, time
 import ctypes, ctypes.wintypes
-import comtypes.client
-import msaa
+import msaa, comtypes.client
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
