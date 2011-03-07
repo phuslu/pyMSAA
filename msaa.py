@@ -195,7 +195,6 @@ class Element(object):
         self.IAccessible._IAccessible__com_accDoDefaultAction(objChildId)
 
     def accFocus(self):
-        '''Need Implemented'''
         if self.iObjectId:
             return self.IAccessible.accFocus(self.iObjectId)
         else:
