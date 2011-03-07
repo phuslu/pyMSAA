@@ -4,8 +4,6 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'python.zip'))
 
-print sys.path
-
 import sys, os, re, time
 import xml.dom.minidom, cgi
 import ctypes, ctypes.wintypes
@@ -91,6 +89,7 @@ class Element(object):
             raise TypeError(u'Element(IAccessible,iObjectId) second argument type must be int')
         self.IAccessible = IAccessible
         self.iObjectId = iObjectId
+        self.dictCache = {}
 
     def accChildCount(self):
         if self.iObjectId == 0:
@@ -243,46 +242,63 @@ SELFLAG_REMOVESELECTION 16
         iRole = self.accRole()
         return '[%s(0x%X)|%r|ChildCount:%d]' % (AccRoleNameMap.get(iRole, 'Unkown'), iRole, self.accName(), self.IAccessible.accChildCount)
 
-    def finditer(self, strRoleName, **kwargs):
-        lstStack = [self]
-        while lstStack:
-            objElement = lstStack.pop()
-            if objElement.IAccessible.accChildCount > 0:
-                lstStack += reversed(list(objElement))
-            if objElement == self:
+    def match(self, strRoleName, **kwargs):
+        bMatched = True
+        if strRoleName:
+            iRole = self.accRole()
+            if AccRoleNameMap.get(iRole) != strRoleName:
+                bMatched = False
+        for strProperty in kwargs:
+            try:
+                attr = getattr(self, 'acc'+strProperty)
+            except AttributeError:
                 continue
-            if strRoleName:
-                iRole = objElement.accRole()
-                if AccRoleNameMap.get(iRole) != strRoleName:
-                    continue
-            bMatched = True
-            for strProperty in kwargs:
-                try:
-                    attr = getattr(objElement, 'acc'+strProperty)
-                except AttributeError:
-                    continue
-                try:
-                    value = attr()
-                except:
-                    value = None
-                if type(kwargs[strProperty]) == type(lambda x:True):
-                    bMatched = kwargs[strProperty]
-                    if not bMatched:
-                        break
-                else:
-                    if value != kwargs[strProperty]:
-                        bMatched = False
-                        break
-            if bMatched:
+            try:
+                value = attr()
+            except:
+                value = None
+            if type(kwargs[strProperty]) == type(lambda x:True):
+                bMatched = kwargs[strProperty](value)
+                if not bMatched:
+                    break
+            else:
+                if value != kwargs[strProperty]:
+                    bMatched = False
+                    break
+        return bMatched
+
+    def __findcacheiter(self, strRoleName, **kwargs):
+        for objElement in self.dictCache:
+            if objElement.match(strRoleName, **kwargs):
                 yield objElement
+
+    def finditer(self, strRoleName, **kwargs):
+        lstQueue = list(self)
+        while lstQueue:
+            objElement = lstQueue.pop(0)
+            self.dictCache[objElement] = 1
+            if objElement.match(strRoleName, **kwargs):
+                yield objElement
+            if objElement.IAccessible.accChildCount > 0:
+                lstQueue[:0] = list(objElement)
 
     def find(self, strRoleName, **kwargs):
         try:
-            return self.finditer(strRoleName, **kwargs).next()
+            return self.__findcacheiter(strRoleName, **kwargs).next()
         except StopIteration:
-            return None
+            try:
+                return self.finditer(strRoleName, **kwargs).next()
+            except StopIteration:
+                return None
+
     def findall(self, strRoleName, **kwargs):
-        return list(self.finditer(strRoleName, **kwargs))
+        lstElementList = []
+        dictSeen = {}
+        for objElement in self.finditer(strRoleName, **kwargs):
+            if objElement not in dictSeen:
+                lstElementList.append(objElement)
+                dictSeen[objElement] = 1
+        return lstElementList
 
     def toxml(self):
         objDocument = xml.dom.minidom.Document()
