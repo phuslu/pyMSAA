@@ -5,6 +5,7 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'python.zip'))
 
 import sys, os, re, time
+import logging
 import xml.dom.minidom, cgi
 import ctypes, ctypes.wintypes
 import comtypes, comtypes.automation, comtypes.client
@@ -269,8 +270,12 @@ SELFLAG_REMOVESELECTION 16
 
     def __findcacheiter(self, strRoleName, **kwargs):
         for objElement in self.dictCache:
-            if objElement.match(strRoleName, **kwargs):
-                yield objElement
+            try:
+                if objElement.match(strRoleName, **kwargs):
+                    yield objElement
+            except Exception, ex:
+                logging.exception('Error __findcacheiter:%s', ex)
+                continue
 
     def finditer(self, strRoleName, **kwargs):
         lstQueue = list(self)
