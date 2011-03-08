@@ -245,37 +245,37 @@ SELFLAG_REMOVESELECTION 16
 
     def match(self, strRoleName, **kwargs):
         bMatched = True
-        if strRoleName:
-            iRole = self.accRole()
-            if AccRoleNameMap.get(iRole) != strRoleName:
-                bMatched = False
-        for strProperty in kwargs:
-            try:
-                attr = getattr(self, 'acc'+strProperty)
-            except AttributeError:
-                continue
-            try:
-                value = attr()
-            except:
-                value = None
-            if type(kwargs[strProperty]) == type(lambda x:True):
-                bMatched = kwargs[strProperty](value)
-                if not bMatched:
-                    break
-            else:
-                if value != kwargs[strProperty]:
+        try:
+            if strRoleName:
+                iRole = self.accRole()
+                if AccRoleNameMap.get(iRole) != strRoleName:
                     bMatched = False
-                    break
+            for strProperty in kwargs:
+                try:
+                    attr = getattr(self, 'acc'+strProperty)
+                except AttributeError:
+                    continue
+                try:
+                    value = attr()
+                except:
+                    value = None
+                if type(kwargs[strProperty]) == type(lambda x:True):
+                    bMatched = kwargs[strProperty](value)
+                    if not bMatched:
+                        break
+                else:
+                    if value != kwargs[strProperty]:
+                        bMatched = False
+                        break
+        except Exception, ex:
+            logging.exception('Error: Element.match %s', ex)
+            bMatched = False
         return bMatched
 
     def __findcacheiter(self, strRoleName, **kwargs):
         for objElement in self.dictCache:
-            try:
-                if objElement.match(strRoleName, **kwargs):
-                    yield objElement
-            except Exception, ex:
-                logging.exception('Error __findcacheiter:%s', ex)
-                continue
+            if objElement.match(strRoleName, **kwargs):
+                yield objElement
 
     def finditer(self, strRoleName, **kwargs):
         lstQueue = list(self)
