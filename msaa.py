@@ -107,13 +107,16 @@ class Element(object):
         self.IAccessible._IAccessible__com__get_accRole(objChildId, objRole)
         return objRole.value
 
-    def accName(self):
+    def accName(self, objValue=None):
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
-        objName = comtypes.automation.BSTR()
-        self.IAccessible._IAccessible__com__get_accName(objChildId, ctypes.byref(objName))
-        return objName.value
+        if objValue is None:
+            objName = comtypes.automation.BSTR()
+            self.IAccessible._IAccessible__com__get_accName(objChildId, ctypes.byref(objName))
+            return objName.value
+        else:
+            self.IAccessible._IAccessible__com__set_accName(objChildId, objValue)
 
     def accLocation(self):
         '''return (left, top, width, height)'''
