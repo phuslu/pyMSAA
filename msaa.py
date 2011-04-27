@@ -247,12 +247,10 @@ SELFLAG_REMOVESELECTION 16
         return '[%s(0x%X)|%r|ChildCount:%d]' % (AccRoleNameMap.get(iRole, 'Unkown'), iRole, self.accName(), self.IAccessible.accChildCount)
 
     def match(self, strRoleName, **kwargs):
-        bMatched = True
         try:
-            if strRoleName:
-                iRole = self.accRole()
-                if AccRoleNameMap.get(iRole) != strRoleName:
-                    bMatched = False
+            bMatched = True
+            if strRoleName and AccRoleNameMap.get(self.accRole()) != strRoleName:
+                return False
             for strProperty in kwargs:
                 try:
                     attr = getattr(self, 'acc'+strProperty)
@@ -272,7 +270,7 @@ SELFLAG_REMOVESELECTION 16
                         break
         except Exception, ex:
             logging.exception('Error: Element.match %s', ex)
-            bMatched = False
+            return False
         return bMatched
 
     def __findcacheiter(self, strRoleName, **kwargs):
