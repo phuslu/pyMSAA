@@ -93,12 +93,14 @@ class Element(object):
         self.dictCache = {}
 
     def accChildCount(self):
+        '''Get Child Element Count'''
         if self.iObjectId == 0:
             return self.IAccessible.accChildCount
         else:
             return 0
 
     def accRole(self):
+        '''Get Element Role Name'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
@@ -108,6 +110,7 @@ class Element(object):
         return objRole.value
 
     def accName(self, objValue=None):
+        '''Get Element Name'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
@@ -119,7 +122,7 @@ class Element(object):
             self.IAccessible._IAccessible__com__set_accName(objChildId, objValue)
 
     def accLocation(self):
-        '''return (left, top, width, height)'''
+        '''Get Element Location, return (left, top, width, height)'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
@@ -128,6 +131,7 @@ class Element(object):
         return (objL.value, objT.value, objW.value, objH.value)
 
     def accValue(self, objValue=None):
+        '''Get Element Value'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
@@ -141,6 +145,7 @@ class Element(object):
             return objBSTRValue.value
 
     def accDefaultAction(self):
+        '''Get Element DefaultAction Name'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
@@ -149,6 +154,7 @@ class Element(object):
         return objDefaultAction.value
 
     def accDescription(self):
+        '''Get Element Description'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
@@ -157,6 +163,7 @@ class Element(object):
         return objDescription.value
 
     def accHelp(self):
+        '''Get Element Help String'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
@@ -165,10 +172,11 @@ class Element(object):
         return objHelp.value
 
     def accHelpTopic(self):
-        '''Note  The accHelpTopic property is deprecated and should not be used.'''
+        '''Get Element Help Topic Text'''
         return self.IAccessible.accHelpTopic()
 
     def accKeyboardShortcut(self):
+        '''Get Element Keyboard Shortcut'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
@@ -177,14 +185,17 @@ class Element(object):
         return objKeyboardShortcut.value
 
     def accParent(self):
+        '''Get Element Parent'''
         return self.IAccessible.accParent()
 
     def accSelection(self):
+        '''Get Element Selection Status'''
         objChildren = comtypes.automation.VARIANT()
         self.IAccessible._IAccessible__com__get_accSelection(ctypes.byref(objChildren))
         return objChildren.value
 
     def accState(self):
+        '''Get Element State'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
@@ -197,18 +208,21 @@ class Element(object):
         return self.IAccessible.accNavigate()
 
     def accDoDefaultAction(self):
+        '''Trigger Element DefaultAction, such as click, double click'''
         objChildId = comtypes.automation.VARIANT()
         objChildId.vt = comtypes.automation.VT_I4
         objChildId.value = self.iObjectId
         self.IAccessible._IAccessible__com_accDoDefaultAction(objChildId)
 
     def accFocus(self):
+        '''Foucs The Element'''
         if self.iObjectId:
             return self.IAccessible.accFocus(self.iObjectId)
         else:
             return self.IAccessible.accFocus()
 
     def accSelect(self, iSelection):
+        '''Select The Element'''
         '''
 SELFLAG_TAKEFOCUS       1
 SELFLAG_TAKESELECTION   2
@@ -223,6 +237,7 @@ SELFLAG_REMOVESELECTION 16
             return self.IAccessible.accSelect(iSelection)
 
     def accRoleName(self):
+        '''Get The Role Name'''
         try:
             iRole = self.accRole()
             return AccRoleNameMap.get(iRole)
@@ -230,6 +245,7 @@ SELFLAG_REMOVESELECTION 16
             return None
 
     def __iter__(self):
+        '''Iterate all child Element'''
         if self.iObjectId > 0:
             raise StopIteration()
         objAccChildArray = (comtypes.automation.VARIANT * self.IAccessible.accChildCount)()
@@ -243,14 +259,18 @@ SELFLAG_REMOVESELECTION 16
                 yield Element(self.IAccessible, i+1)
 
     def __str__(self):
+        '''Format Element'''
         iRole = self.accRole()
         return '[%s(0x%X)|%r|ChildCount:%d]' % (AccRoleNameMap.get(iRole, 'Unkown'), iRole, self.accName(), self.IAccessible.accChildCount)
 
     def match(self, strRoleName, **kwargs):
+        '''search match'''
+        bMatched = True
         try:
-            bMatched = True
-            if strRoleName and AccRoleNameMap.get(self.accRole()) != strRoleName:
-                return False
+            if strRoleName:
+                iRole = self.accRole()
+                if AccRoleNameMap.get(iRole) != strRoleName:
+                    bMatched = False
             for strProperty in kwargs:
                 try:
                     attr = getattr(self, 'acc'+strProperty)
@@ -270,15 +290,17 @@ SELFLAG_REMOVESELECTION 16
                         break
         except Exception, ex:
             logging.exception('Error: Element.match %s', ex)
-            return False
+            bMatched = False
         return bMatched
 
     def __findcacheiter(self, strRoleName, **kwargs):
+        '''Find Child Element in the cache'''
         for objElement in self.dictCache:
             if objElement.match(strRoleName, **kwargs):
                 yield objElement
 
     def finditer(self, strRoleName, **kwargs):
+        '''Find Child Element'''
         lstQueue = list(self)
         while lstQueue:
             objElement = lstQueue.pop(0)
@@ -289,6 +311,7 @@ SELFLAG_REMOVESELECTION 16
                 lstQueue[:0] = list(objElement)
 
     def find(self, strRoleName, **kwargs):
+        '''Find First Child Element'''
         try:
             return self.__findcacheiter(strRoleName, **kwargs).next()
         except StopIteration:
@@ -298,9 +321,11 @@ SELFLAG_REMOVESELECTION 16
                 return None
 
     def findall(self, strRoleName, **kwargs):
+        '''Find All Child Element'''
         return list(self.finditer(strRoleName, **kwargs))
 
     def toxml(self):
+        '''Convert Element Tree to XML'''
         objDocument = xml.dom.minidom.Document()
         lstQueue = [(self, objDocument)]
         while lstQueue:
@@ -349,4 +374,3 @@ def window(objHandle):
     else:
         raise TypeError(u'window argument objHandle must be a int/str/unicode/AccObject, not %r' % objHandle)
     return objElement
-
