@@ -257,7 +257,7 @@ SELFLAG_REMOVESELECTION 16
                 yield Element(objAccChild.value.QueryInterface(comtypes.gen.Accessibility.IAccessible), 0)
             else: #if objAccChild.vt == comtypes.automation.VT_I4:
                 # yield Element(self.IAccessible, i+1)
-                yield yield Element(self.IAccessible, objAccChild.value)
+                yield Element(self.IAccessible, objAccChild.value)
 
     def __str__(self):
         '''Format Element'''
