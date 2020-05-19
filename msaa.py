@@ -188,7 +188,7 @@ class Element(object):
         '''Get Element Parent'''
         objParent = self.IAccessible.accParent
         if objParent is not None:
-            return Element(self.IAccessible.accParent, 0)
+            return Element(objParent, 0)
 
     def accSelection(self):
         '''Get Element Selection Status'''
