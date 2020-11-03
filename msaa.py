@@ -4,6 +4,9 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'python.zip'))
 
+if sys.version_info.major > 2:
+    from past.builtins import unicode, basestring, long, xrange
+
 import sys, os, re, time
 import logging
 import xml.dom.minidom, cgi
@@ -249,7 +252,7 @@ SELFLAG_REMOVESELECTION 16
     def __iter__(self):
         '''Iterate all child Element'''
         if self.iObjectId > 0:
-            raise StopIteration()
+            return
         objAccChildArray = (comtypes.automation.VARIANT * self.IAccessible.accChildCount)()
         objAccChildCount = ctypes.c_long()
         ctypes.oledll.oleacc.AccessibleChildren(self.IAccessible, 0, self.IAccessible.accChildCount, objAccChildArray, ctypes.byref(objAccChildCount))
@@ -291,7 +294,7 @@ SELFLAG_REMOVESELECTION 16
                     if value != kwargs[strProperty]:
                         bMatched = False
                         break
-        except Exception, ex:
+        except Exception as ex:
             logging.exception('Error: Element.match %s', ex)
             bMatched = False
         return bMatched
@@ -316,10 +319,10 @@ SELFLAG_REMOVESELECTION 16
     def find(self, strRoleName, **kwargs):
         '''Find First Child Element'''
         try:
-            return self.__findcacheiter(strRoleName, **kwargs).next()
+            return next(self.__findcacheiter(strRoleName, **kwargs))
         except StopIteration:
             try:
-                return self.finditer(strRoleName, **kwargs).next()
+                return next(self.finditer(strRoleName, **kwargs))
             except StopIteration:
                 return None
 
