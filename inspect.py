@@ -44,7 +44,7 @@ def main():
             x_old, y_old = x, y
             objElement = msaa.point(x, y)
             os.system('cls')
-            print GetCurrentElementInfo(objElement)
+            print(GetCurrentElementInfo(objElement))
         time.sleep(0.5)
 
 if __name__ == '__main__':
